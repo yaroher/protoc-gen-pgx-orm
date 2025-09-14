@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+option go_package = "github.com/yaroher/protoc-gen-pgx-orm/protopgx";
+
+package sql;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FileOptions {
+    repeated string additional_code = 781254;
+}
+
+enum SqlFiledType {
+    UNSPECIFIED = 0;
+    TEXT = 1;
+    INTEGER = 2;
+    BIGINT = 3;
+    SMALLINT = 4;
+    DOUBLE_PRECISION = 5;
+    REAL = 6;
+    BOOLEAN = 7;
+    TIMESTAMPTZ = 9;
+    HSTORE = 11;
+    CHAR = 12;
+    JSONB = 15;
+}
+
+message SqlTable {
+    bool generate = 1;
+    optional string table_name = 2;
+    repeated SqlVirtualField virtual_fields = 4;
+    repeated string constraints = 5;
+}
+
+extend google.protobuf.MessageOptions {
+    SqlTable sql_table = 1001;
+}
+
+message SqlType {
+    SqlFiledType type = 1;
+//    string add = 2;
+    bool force_not_array = 3;
+}
+
+message SqlConstraint {
+    bool unique = 1;
+    bool primary_key = 2;
+    string default_value = 3;
+    string constraint = 4;
+}
+
+message SqlVirtualField {
+    string sql_name = 1;
+    SqlType sql_type = 2;
+    SqlConstraint constraints = 3;
+
+    bool is_nullable = 101;
+    bool is_array = 102;
+}
+
+message SqlField {
+    bool skip = 1;
+    SqlType sql_type = 2;
+    SqlConstraint constraints = 3;
+    // if message kind is message chose embed it or serialize if both are false skip field
+    bool embedded_message = 8;
+    bool serialized_message = 9;
+    // only for virtual fields
+}
+
+message SqlRelation {
+    message OneToMany {
+        string ref_name = 1;
+        string constraint = 2;
+        bool on_delete_cascade = 3;
+        bool existed_field = 4;
+    }
+    message ManyToMany {
+        optional SqlTable table = 1;
+        bool ref_on_delete_cascade = 2;
+        string ref_constraint = 3;
+        bool back_ref_on_delete_cascade = 4;
+        string back_ref_constraint = 5;
+    }
+    oneof relation {
+        OneToMany one_to_many = 1;
+        ManyToMany many_to_many = 2;
+    }
+}
+
+extend google.protobuf.FieldOptions {
+    SqlField sql_field = 1001;
+    SqlRelation sql_relation = 1002;
+}
+
+message CasterFn {
+    string name = 1;
+    string type = 2;
+    string call_signature = 3;
+    bool user_defined = 4;
+}
+
+message ParsedField {
+    enum ProtoKind {
+        KIND_UNSPECIFIED = 0;
+        BoolKind = 8;
+        EnumKind = 14;
+        Int32Kind = 5;
+        Sint32Kind = 17;
+        Uint32Kind = 13;
+        Int64Kind = 3;
+        Sint64Kind = 18;
+        Uint64Kind = 4;
+        Sfixed32Kind = 15;
+        Fixed32Kind = 7;
+        FloatKind = 2;
+        Sfixed64Kind = 16;
+        Fixed64Kind = 6;
+        DoubleKind = 1;
+        StringKind = 9;
+        BytesKind = 12;
+        MessageKind = 11;
+    }
+    message TypeInfo {
+        SqlType sql_type = 1;
+        string pgx_type = 2;
+        CasterFn up_caster_fn = 5;
+        CasterFn down_caster_fn = 6;
+        bool nullable = 7; // from proto
+        bool is_array = 8; // from proto
+        ProtoKind proto_kind = 9;
+    }
+    TypeInfo type_info = 4;
+    SqlConstraint constraint = 5;
+    string from_one_of_field = 7;
+    string from_one_of_field_type = 8;
+    string proto_name = 9;
+    bool virtual = 10;
+}
