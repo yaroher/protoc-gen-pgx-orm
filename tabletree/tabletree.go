@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/yaroher/protoc-gen-pgx-orm/help"
+	"github.com/yaroher/protoc-gen-pgx-orm/protopgx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -108,8 +109,8 @@ func (t *TableNode) GetVirtualFields() []*Field {
 	return ret
 }
 
-func (t *TableNode) AllUserCasters() []*gen.CasterFn {
-	ret := make([]*gen.CasterFn, 0)
+func (t *TableNode) AllUserCasters() []*protopgx.CasterFn {
+	ret := make([]*protopgx.CasterFn, 0)
 	for _, field := range t.Fields {
 		if field.GetTypeInfo().GetUpCasterFn().GetUserDefined() {
 			ret = append(ret, field.GetTypeInfo().GetUpCasterFn())
@@ -146,7 +147,7 @@ func CollectTablesFromProto(files []*protogen.File) []*TableNode {
 		}
 		for _, message := range file.Messages {
 			opts := message.Desc.Options().(*descriptorpb.MessageOptions)
-			sqlTable, ok := proto.GetExtension(opts, gen.E_SqlTable).(*gen.SqlTable)
+			sqlTable, ok := proto.GetExtension(opts, protopgx.E_SqlTable).(*protopgx.SqlTable)
 			if !ok || sqlTable == nil || sqlTable.GetGenerate() == false {
 				continue
 			}
@@ -189,7 +190,7 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 		for _, message := range file.Messages {
 			for _, field := range message.Fields {
 				opts := field.Desc.Options().(*descriptorpb.FieldOptions)
-				relation, _ := proto.GetExtension(opts, gen.E_SqlRelation).(*gen.SqlRelation)
+				relation, _ := proto.GetExtension(opts, protopgx.E_SqlRelation).(*protopgx.SqlRelation)
 				if relation == nil {
 					continue
 				}
@@ -197,7 +198,7 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 					panic("relations support only repeated Message fields")
 				}
 				switch relation.GetRelation().(type) {
-				case *gen.SqlRelation_OneToMany_:
+				case *protopgx.SqlRelation_OneToMany_:
 					targetTable, ok := findTable(tables, field.Message.Desc.FullName())
 					if !ok {
 						panic(fmt.Sprintf("target table %s for relatrion %s not found", field.Message.Desc.FullName(), field.Desc.Name()))
@@ -225,14 +226,14 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 							onDelete = " ON DELETE CASCADE"
 						}
 						targetField = &Field{
-							ParsedField: &gen.ParsedField{
+							ParsedField: &protopgx.ParsedField{
 								Virtual: true,
 								ProtoName: help.StringOrDefault(
 									relation.GetOneToMany().GetRefName(),
 									fmt.Sprintf("%s_id", strings.ToLower(string(message.Desc.Name()))),
 								),
 								TypeInfo: sourceField.GetTypeInfo(),
-								Constraint: &gen.SqlConstraint{
+								Constraint: &protopgx.SqlConstraint{
 									Constraint: help.StringOrDefault(
 										relation.GetOneToMany().GetConstraint(),
 										fmt.Sprintf("REFERENCES %s (id)%s", sourceTable.SqlTableName(), onDelete),
@@ -253,7 +254,7 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 						ToField:   sourceField,
 					})
 
-				case *gen.SqlRelation_ManyToMany_:
+				case *protopgx.SqlRelation_ManyToMany_:
 					targetTable, ok := findTable(tables, field.Message.Desc.FullName())
 					if !ok {
 						panic(fmt.Sprintf("target table %s for relatrion %s not found", field.Message.Desc.FullName(), field.Desc.Name()))
@@ -275,11 +276,11 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 						fwdOnDelete = " ON DELETE CASCADE"
 					}
 					newForwardRelField := &Field{
-						ParsedField: &gen.ParsedField{
+						ParsedField: &protopgx.ParsedField{
 							ProtoName: fmt.Sprintf("%s_id", targetTable.SqlTableName()),
 							Virtual:   true,
 							TypeInfo:  targetField.GetTypeInfo(),
-							Constraint: &gen.SqlConstraint{
+							Constraint: &protopgx.SqlConstraint{
 								Constraint: help.StringOrDefault(
 									relation.GetManyToMany().GetRefConstraint(),
 									fmt.Sprintf(
@@ -295,11 +296,11 @@ func collectRelations(files []*protogen.File, tables []*TableNode) []*TableNode 
 						bwdOnDelete = " ON DELETE CASCADE"
 					}
 					newBackwardRelField := &Field{
-						ParsedField: &gen.ParsedField{
+						ParsedField: &protopgx.ParsedField{
 							ProtoName: fmt.Sprintf("%s_id", sourceTable.SqlTableName()),
 							Virtual:   true,
 							TypeInfo:  targetField.GetTypeInfo(),
-							Constraint: &gen.SqlConstraint{
+							Constraint: &protopgx.SqlConstraint{
 								Constraint: help.StringOrDefault(
 									relation.GetManyToMany().GetBackRefConstraint(),
 									fmt.Sprintf(
