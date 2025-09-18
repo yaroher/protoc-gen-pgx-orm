@@ -102,6 +102,12 @@ func isSerializedMessage(field *protogen.Field) bool {
 	return sqlField.GetSerializedMessage()
 }
 
+func isEmbeddedMessage(field *protogen.Field) bool {
+	opts := field.Desc.Options().(*descriptorpb.FieldOptions)
+	sqlField, _ := proto.GetExtension(opts, protopgx.E_SqlField).(*protopgx.SqlField)
+	return sqlField.GetEmbeddedMessage()
+}
+
 func userDefinedCastType(left, right string) string {
 	return fmt.Sprintf("TypeCaster[%s, %s]", left, right)
 }

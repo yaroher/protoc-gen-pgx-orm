@@ -17,7 +17,7 @@ type Field struct {
 	*protopgx.ParsedField
 }
 
-func NewFromProtoField(field *protogen.Field) *Field {
+func NewFromProtoField(field *protogen.Field) []*Field {
 	nullable := isFieldNullable(field)
 	array := isFieldArray(field)
 
@@ -34,7 +34,10 @@ func NewFromProtoField(field *protogen.Field) *Field {
 	if sqlField.GetSkip() {
 		return nil
 	}
-	if field.Desc.Kind() == protoreflect.MessageKind && !isKnownType(field) && !isSerializedMessage(field) {
+	if field.Desc.Kind() == protoreflect.MessageKind &&
+		!isKnownType(field) &&
+		!isSerializedMessage(field) &&
+		!isEmbeddedMessage(field) {
 		help.Logger.Warn(
 			"skip message field cause not serialized mark",
 			zap.String("name", string(field.Desc.FullName())),
@@ -46,19 +49,36 @@ func NewFromProtoField(field *protogen.Field) *Field {
 			Type: getSqlTypeFromProtoType(field),
 		}
 	}
-	return &Field{
-		ParsedField: &protopgx.ParsedField{
-			ProtoName: string(field.Desc.FullName()),
-			Virtual:   false,
-			TypeInfo: NewTypeInfo(
-				field,
-				sqlField.GetSqlType(),
-				nullable,
-				array,
-			),
-			Constraint: sqlField.GetConstraints(),
-		},
+	ret := make([]*Field, 0)
+	if field.Desc.Kind() == protoreflect.MessageKind && isEmbeddedMessage(field) {
+		for _, innerf := range field.Message.Fields {
+			newfields := NewFromProtoField(innerf)
+			if len(newfields) == 0 {
+				help.Logger.Warn("skip parsing embed for field, cause not embed message")
+			}
+			newf := newfields[0]
+			newf.ParsedField.Embedded = true
+			newf.ParsedField.FromEmbeddedMessageField = string(field.Desc.FullName())
+			newf.ParsedField.FromEmbeddedMessageType = qualifiedGoIdent(field.Message.GoIdent)
+			ret = append(ret, newf)
+		}
+	} else {
+		ret = append(ret, &Field{
+			ParsedField: &protopgx.ParsedField{
+				ProtoName: string(field.Desc.FullName()),
+				Virtual:   false,
+				TypeInfo: NewTypeInfo(
+					field,
+					sqlField.GetSqlType(),
+					nullable,
+					array,
+				),
+				Constraint: sqlField.GetConstraints(),
+			},
+		})
 	}
+
+	return ret
 }
 
 func NewFromVirtualField(message *protogen.Message, field *protopgx.SqlVirtualField) *Field {
@@ -186,7 +206,7 @@ func CollectFieldsFromMessage(message *protogen.Message) []*Field {
 		if generated == nil {
 			continue
 		}
-		fields = append(fields, generated)
+		fields = append(fields, generated...)
 	}
 	for _, virtual := range msgOpts.GetVirtualFields() {
 		fields = append(fields, NewFromVirtualField(message, virtual))
