@@ -111,7 +111,7 @@ func (t *TableNode) ToEmbeddedFieldsCast() string {
 			))
 			buff.WriteString("\n")
 		}
-		buff.WriteString("}")
+		buff.WriteString("}\n")
 	}
 	return buff.String()
 }
