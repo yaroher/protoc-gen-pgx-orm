@@ -29,7 +29,7 @@ type Relation struct {
 	FromField *Field
 }
 
-type OneOf struct {
+type Encapsulation struct {
 	TargetProtoName protoreflect.FullName
 	Fields          []*Field
 }
@@ -42,7 +42,8 @@ type TableNode struct {
 	Constraints []string
 	Virtual     bool
 
-	OneOfs    map[protoreflect.FullName]*OneOf
+	OneOfs    map[protoreflect.FullName]*Encapsulation
+	Embeds    map[protoreflect.FullName]*Encapsulation
 	Relations []*Relation
 	Backwards []*BackwardRelation
 }
@@ -86,6 +87,31 @@ func (t *TableNode) ToOneOffFieldsCast() string {
 			buff.WriteString("\n")
 			buff.WriteString("}\n")
 		}
+	}
+	return buff.String()
+}
+
+func (t *TableNode) ToEmbeddedFieldsCast() string {
+	buff := strings.Builder{}
+	for _, off := range t.Embeds {
+		if len(off.Fields) == 0 {
+			continue
+		}
+		targetName := strcase.ToCamel(string(protoreflect.FullName(off.Fields[0].GetFromEmbeddedMessageField()).Name()))
+		buff.WriteString(fmt.Sprintf(
+			"entity.%s = &%s{\n",
+			targetName,
+			off.Fields[0].GetFromEmbeddedMessageType(),
+		))
+		for _, field := range off.Fields {
+			buff.WriteString(fmt.Sprintf(
+				"%s: %s,",
+				field.GoName(),
+				field.ToUpCaster(),
+			))
+			buff.WriteString("\n")
+		}
+		buff.WriteString("}")
 	}
 	return buff.String()
 }
@@ -156,15 +182,28 @@ func CollectTablesFromProto(files []*protogen.File) []*TableNode {
 				Name:        message.Desc.FullName(),
 				Fields:      CollectFieldsFromMessage(message),
 				Constraints: sqlTable.GetConstraints(),
-				OneOfs:      make(map[protoreflect.FullName]*OneOf),
+				OneOfs:      make(map[protoreflect.FullName]*Encapsulation),
+				Embeds:      make(map[protoreflect.FullName]*Encapsulation),
 			}
 			for _, field := range t.Fields {
 				if field.GetFromOneOfField() != "" {
 					if off, ok := t.OneOfs[protoreflect.FullName(field.GetFromOneOfField())]; ok {
 						off.Fields = append(off.Fields, field)
 					} else {
-						t.OneOfs[protoreflect.FullName(field.GetFromOneOfField())] = &OneOf{
+						t.OneOfs[protoreflect.FullName(field.GetFromOneOfField())] = &Encapsulation{
 							TargetProtoName: protoreflect.FullName(field.GetFromOneOfField()),
+							Fields:          []*Field{field},
+						}
+					}
+				}
+			}
+			for _, field := range t.Fields {
+				if field.Embedded {
+					if off, ok := t.Embeds[protoreflect.FullName(field.GetFromEmbeddedMessageField())]; ok {
+						off.Fields = append(off.Fields, field)
+					} else {
+						t.Embeds[protoreflect.FullName(field.GetFromEmbeddedMessageField())] = &Encapsulation{
+							TargetProtoName: protoreflect.FullName(field.GetFromEmbeddedMessageField()),
 							Fields:          []*Field{field},
 						}
 					}

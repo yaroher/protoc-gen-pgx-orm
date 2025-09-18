@@ -16,3 +16,16 @@ ALL_PROTO_FILES = $(shell find './' -type f -name '*.proto')
 .PHONY: build-test
 build-test: build
 	protoc --plugin=./protoc-gen-pgx-orm --pgx-orm_out=./test --pgx-orm_opt=paths=source_relative,sql_file=./test/models.sql,orm_folder=./test/orm --proto_path=. $(ALL_PROTO_FILES)
+
+
+branch=main
+.PHONY: revision
+revision: # Создание тега
+	@if [ -e $(tag) ]; then \
+		echo "error: Specify version 'tag='"; \
+		exit 1; \
+	fi
+	git tag -d v${tag} || true
+	git push --delete origin v${tag} || true
+	git tag v$(tag)
+	git push origin v$(tag)

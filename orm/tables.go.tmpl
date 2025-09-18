@@ -218,6 +218,11 @@ opts ...upcast{{$table.ProtoName}}Option,
                 scanner.{{$field.GoName}}={{$field.ToDownCaster}}
             {{- end }}
         {{- end }}
+        {{- range $index, $onOnf:= .Embeds}}
+            {{- range $index, $field:= .Fields}}
+                scanner.{{$field.GoName}}={{$field.ToDownCaster}}
+            {{- end }}
+        {{- end }}
         {{- if $table.HasVirtualFields }}
         options := &upcast{{$table.ProtoName}}Options{}
         for _, opt := range opts {
@@ -249,6 +254,7 @@ func ScannerTo{{$table.ProtoName}}(
             {{- end }}
             {{- end }}
         }
+        {{$table.ToEmbeddedFieldsCast}}
         {{$table.ToOneOffFieldsCast}}
         return entity
     }

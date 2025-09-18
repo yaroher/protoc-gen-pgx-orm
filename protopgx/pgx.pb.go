@@ -693,15 +693,18 @@ func (x *CasterFn) GetUserDefined() bool {
 }
 
 type ParsedField struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	TypeInfo           *ParsedField_TypeInfo  `protobuf:"bytes,4,opt,name=type_info,json=typeInfo,proto3" json:"type_info,omitempty"`
-	Constraint         *SqlConstraint         `protobuf:"bytes,5,opt,name=constraint,proto3" json:"constraint,omitempty"`
-	FromOneOfField     string                 `protobuf:"bytes,7,opt,name=from_one_of_field,json=fromOneOfField,proto3" json:"from_one_of_field,omitempty"`
-	FromOneOfFieldType string                 `protobuf:"bytes,8,opt,name=from_one_of_field_type,json=fromOneOfFieldType,proto3" json:"from_one_of_field_type,omitempty"`
-	ProtoName          string                 `protobuf:"bytes,9,opt,name=proto_name,json=protoName,proto3" json:"proto_name,omitempty"`
-	Virtual            bool                   `protobuf:"varint,10,opt,name=virtual,proto3" json:"virtual,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	TypeInfo                 *ParsedField_TypeInfo  `protobuf:"bytes,4,opt,name=type_info,json=typeInfo,proto3" json:"type_info,omitempty"`
+	Constraint               *SqlConstraint         `protobuf:"bytes,5,opt,name=constraint,proto3" json:"constraint,omitempty"`
+	FromOneOfField           string                 `protobuf:"bytes,7,opt,name=from_one_of_field,json=fromOneOfField,proto3" json:"from_one_of_field,omitempty"`
+	FromOneOfFieldType       string                 `protobuf:"bytes,8,opt,name=from_one_of_field_type,json=fromOneOfFieldType,proto3" json:"from_one_of_field_type,omitempty"`
+	ProtoName                string                 `protobuf:"bytes,9,opt,name=proto_name,json=protoName,proto3" json:"proto_name,omitempty"`
+	Virtual                  bool                   `protobuf:"varint,10,opt,name=virtual,proto3" json:"virtual,omitempty"`
+	FromEmbeddedMessageField string                 `protobuf:"bytes,11,opt,name=from_embedded_message_field,json=fromEmbeddedMessageField,proto3" json:"from_embedded_message_field,omitempty"`
+	FromEmbeddedMessageType  string                 `protobuf:"bytes,12,opt,name=from_embedded_message_type,json=fromEmbeddedMessageType,proto3" json:"from_embedded_message_type,omitempty"`
+	Embedded                 bool                   `protobuf:"varint,13,opt,name=embedded,proto3" json:"embedded,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ParsedField) Reset() {
@@ -772,6 +775,27 @@ func (x *ParsedField) GetProtoName() string {
 func (x *ParsedField) GetVirtual() bool {
 	if x != nil {
 		return x.Virtual
+	}
+	return false
+}
+
+func (x *ParsedField) GetFromEmbeddedMessageField() string {
+	if x != nil {
+		return x.FromEmbeddedMessageField
+	}
+	return ""
+}
+
+func (x *ParsedField) GetFromEmbeddedMessageType() string {
+	if x != nil {
+		return x.FromEmbeddedMessageType
+	}
+	return ""
+}
+
+func (x *ParsedField) GetEmbedded() bool {
+	if x != nil {
+		return x.Embedded
 	}
 	return false
 }
@@ -1137,7 +1161,7 @@ const file_pgx_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12%\n" +
 	"\x0ecall_signature\x18\x03 \x01(\tR\rcallSignature\x12!\n" +
-	"\fuser_defined\x18\x04 \x01(\bR\vuserDefined\"\xa6\a\n" +
+	"\fuser_defined\x18\x04 \x01(\bR\vuserDefined\"\xbe\b\n" +
 	"\vParsedField\x126\n" +
 	"\ttype_info\x18\x04 \x01(\v2\x19.sql.ParsedField.TypeInfoR\btypeInfo\x122\n" +
 	"\n" +
@@ -1148,7 +1172,10 @@ const file_pgx_proto_rawDesc = "" +
 	"\n" +
 	"proto_name\x18\t \x01(\tR\tprotoName\x12\x18\n" +
 	"\avirtual\x18\n" +
-	" \x01(\bR\avirtual\x1a\xdf\x02\n" +
+	" \x01(\bR\avirtual\x12=\n" +
+	"\x1bfrom_embedded_message_field\x18\v \x01(\tR\x18fromEmbeddedMessageField\x12;\n" +
+	"\x1afrom_embedded_message_type\x18\f \x01(\tR\x17fromEmbeddedMessageType\x12\x1a\n" +
+	"\bembedded\x18\r \x01(\bR\bembedded\x1a\xdf\x02\n" +
 	"\bTypeInfo\x12'\n" +
 	"\bsql_type\x18\x01 \x01(\v2\f.sql.SqlTypeR\asqlType\x12\x19\n" +
 	"\bpgx_type\x18\x02 \x01(\tR\apgxType\x12/\n" +

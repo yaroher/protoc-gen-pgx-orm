@@ -138,4 +138,7 @@ message ParsedField {
     string from_one_of_field_type = 8;
     string proto_name = 9;
     bool virtual = 10;
+    string from_embedded_message_field = 11;
+    string from_embedded_message_type = 12;
+    bool embedded = 13;
 }
