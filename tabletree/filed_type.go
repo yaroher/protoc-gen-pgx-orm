@@ -24,6 +24,7 @@ func NewTypeInfo(
 			IsArray:               array,
 			ProtoKind:             protopgx.ParsedField_KIND_UNSPECIFIED,
 			ForceUserDefineCaster: opts.UserCast,
+			OverrideSqlName:       opts.Name,
 		}
 	}
 	parsed := &protopgx.ParsedField_TypeInfo{
@@ -33,6 +34,7 @@ func NewTypeInfo(
 		IsArray:               array,
 		ProtoKind:             protopgx.ParsedField_ProtoKind(field.Desc.Kind()),
 		ForceUserDefineCaster: opts.UserCast,
+		OverrideSqlName:       opts.Name,
 	}
 	parsed.DownCasterFn = getDowncast(field, parsed)
 	parsed.UpCasterFn = getUpcast(field, parsed)

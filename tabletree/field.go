@@ -103,6 +103,9 @@ func NewFromVirtualField(message *protogen.Message, field *protopgx.SqlVirtualFi
 }
 
 func (t *Field) SqlFieldName() string {
+	if t.TypeInfo != nil && t.TypeInfo.OverrideSqlName != nil {
+		return *t.TypeInfo.OverrideSqlName
+	}
 	return strcase.ToSnake(string(protoreflect.FullName(t.ProtoName).Name()))
 }
 
@@ -188,7 +191,7 @@ func (t *Field) ToSql() string {
 	}
 	return fmt.Sprintf(
 		"\t%s %s %s",
-		strcase.ToSnake(string(protoreflect.FullName(t.ProtoName).Name())),
+		t.SqlFieldName(),
 		strings.ToUpper(typed),
 		getFieldConstraint(t.GetConstraint(), t.GetTypeInfo().GetNullable()),
 	)

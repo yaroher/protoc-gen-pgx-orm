@@ -261,11 +261,11 @@ func (x *SqlTable) GetConstraints() []string {
 }
 
 type SqlType struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Type  SqlFiledType           `protobuf:"varint,1,opt,name=type,proto3,enum=sql.SqlFiledType" json:"type,omitempty"`
-	// string add = 2;
-	ForceNotArray bool `protobuf:"varint,3,opt,name=force_not_array,json=forceNotArray,proto3" json:"force_not_array,omitempty"`
-	UserCast      bool `protobuf:"varint,4,opt,name=user_cast,json=userCast,proto3" json:"user_cast,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          SqlFiledType           `protobuf:"varint,1,opt,name=type,proto3,enum=sql.SqlFiledType" json:"type,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	ForceNotArray bool                   `protobuf:"varint,3,opt,name=force_not_array,json=forceNotArray,proto3" json:"force_not_array,omitempty"`
+	UserCast      bool                   `protobuf:"varint,4,opt,name=user_cast,json=userCast,proto3" json:"user_cast,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -305,6 +305,13 @@ func (x *SqlType) GetType() SqlFiledType {
 		return x.Type
 	}
 	return SqlFiledType_UNSPECIFIED
+}
+
+func (x *SqlType) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
 }
 
 func (x *SqlType) GetForceNotArray() bool {
@@ -954,6 +961,7 @@ type ParsedField_TypeInfo struct {
 	IsArray               bool                   `protobuf:"varint,8,opt,name=is_array,json=isArray,proto3" json:"is_array,omitempty"` // from proto
 	ProtoKind             ParsedField_ProtoKind  `protobuf:"varint,9,opt,name=proto_kind,json=protoKind,proto3,enum=sql.ParsedField_ProtoKind" json:"proto_kind,omitempty"`
 	ForceUserDefineCaster bool                   `protobuf:"varint,10,opt,name=force_user_define_caster,json=forceUserDefineCaster,proto3" json:"force_user_define_caster,omitempty"`
+	OverrideSqlName       *string                `protobuf:"bytes,11,opt,name=override_sql_name,json=overrideSqlName,proto3,oneof" json:"override_sql_name,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1044,6 +1052,13 @@ func (x *ParsedField_TypeInfo) GetForceUserDefineCaster() bool {
 	return false
 }
 
+func (x *ParsedField_TypeInfo) GetOverrideSqlName() string {
+	if x != nil && x.OverrideSqlName != nil {
+		return *x.OverrideSqlName
+	}
+	return ""
+}
+
 var file_pgx_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.FileOptions)(nil),
@@ -1110,11 +1125,13 @@ const file_pgx_proto_rawDesc = "" +
 	"table_name\x18\x02 \x01(\tH\x00R\ttableName\x88\x01\x01\x12;\n" +
 	"\x0evirtual_fields\x18\x04 \x03(\v2\x14.sql.SqlVirtualFieldR\rvirtualFields\x12 \n" +
 	"\vconstraints\x18\x05 \x03(\tR\vconstraintsB\r\n" +
-	"\v_table_name\"u\n" +
+	"\v_table_name\"\x97\x01\n" +
 	"\aSqlType\x12%\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x11.sql.SqlFiledTypeR\x04type\x12&\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x11.sql.SqlFiledTypeR\x04type\x12\x17\n" +
+	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12&\n" +
 	"\x0fforce_not_array\x18\x03 \x01(\bR\rforceNotArray\x12\x1b\n" +
-	"\tuser_cast\x18\x04 \x01(\bR\buserCast\"\x8d\x01\n" +
+	"\tuser_cast\x18\x04 \x01(\bR\buserCastB\a\n" +
+	"\x05_name\"\x8d\x01\n" +
 	"\rSqlConstraint\x12\x16\n" +
 	"\x06unique\x18\x01 \x01(\bR\x06unique\x12\x1f\n" +
 	"\vprimary_key\x18\x02 \x01(\bR\n" +
@@ -1161,7 +1178,7 @@ const file_pgx_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12%\n" +
 	"\x0ecall_signature\x18\x03 \x01(\tR\rcallSignature\x12!\n" +
-	"\fuser_defined\x18\x04 \x01(\bR\vuserDefined\"\xbe\b\n" +
+	"\fuser_defined\x18\x04 \x01(\bR\vuserDefined\"\x85\t\n" +
 	"\vParsedField\x126\n" +
 	"\ttype_info\x18\x04 \x01(\v2\x19.sql.ParsedField.TypeInfoR\btypeInfo\x122\n" +
 	"\n" +
@@ -1175,7 +1192,7 @@ const file_pgx_proto_rawDesc = "" +
 	" \x01(\bR\avirtual\x12=\n" +
 	"\x1bfrom_embedded_message_field\x18\v \x01(\tR\x18fromEmbeddedMessageField\x12;\n" +
 	"\x1afrom_embedded_message_type\x18\f \x01(\tR\x17fromEmbeddedMessageType\x12\x1a\n" +
-	"\bembedded\x18\r \x01(\bR\bembedded\x1a\xdf\x02\n" +
+	"\bembedded\x18\r \x01(\bR\bembedded\x1a\xa6\x03\n" +
 	"\bTypeInfo\x12'\n" +
 	"\bsql_type\x18\x01 \x01(\v2\f.sql.SqlTypeR\asqlType\x12\x19\n" +
 	"\bpgx_type\x18\x02 \x01(\tR\apgxType\x12/\n" +
@@ -1187,7 +1204,9 @@ const file_pgx_proto_rawDesc = "" +
 	"\n" +
 	"proto_kind\x18\t \x01(\x0e2\x1a.sql.ParsedField.ProtoKindR\tprotoKind\x127\n" +
 	"\x18force_user_define_caster\x18\n" +
-	" \x01(\bR\x15forceUserDefineCaster\"\xb0\x02\n" +
+	" \x01(\bR\x15forceUserDefineCaster\x12/\n" +
+	"\x11override_sql_name\x18\v \x01(\tH\x00R\x0foverrideSqlName\x88\x01\x01B\x14\n" +
+	"\x12_override_sql_name\"\xb0\x02\n" +
 	"\tProtoKind\x12\x14\n" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bBoolKind\x10\b\x12\f\n" +
@@ -1301,11 +1320,13 @@ func file_pgx_proto_init() {
 		return
 	}
 	file_pgx_proto_msgTypes[0].OneofWrappers = []any{}
+	file_pgx_proto_msgTypes[1].OneofWrappers = []any{}
 	file_pgx_proto_msgTypes[5].OneofWrappers = []any{
 		(*SqlRelation_OneToMany_)(nil),
 		(*SqlRelation_ManyToMany_)(nil),
 	}
 	file_pgx_proto_msgTypes[9].OneofWrappers = []any{}
+	file_pgx_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
