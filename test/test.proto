@@ -1,0 +1,579 @@
+syntax = "proto3";
+
+option go_package = "github.com/yaroher/protoc-gen-pgx-orm/protopgx";
+
+package test;
+
+import "protopgx/pgx.proto";
+
+// Тест для FileOptions - добавление дополнительного кода
+option (sql.additional_code) = "-- Custom SQL code for initialization";
+option (sql.additional_code) = "CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);";
+
+message Ulid {
+    string  id = 1;
+}
+
+// Основная тестовая таблица пользователей
+message User {
+    option (sql.sql_table) = {
+        generate: true
+        table_name: "users"
+        virtual_fields: [
+            {
+                sql_name: "created_at"
+                sql_type: {type: TIMESTAMPTZ}
+                constraints: {default_value: "NOW()"}
+                is_nullable: false
+            },
+            {
+                sql_name: "updated_at" 
+                sql_type: {type: TIMESTAMPTZ}
+                constraints: {default_value: "NOW()"}
+                is_nullable: false
+            },
+            {
+                sql_name: "metadata"
+                sql_type: {type: JSONB}
+                is_nullable: true
+            }
+        ]
+        constraints: [
+            "CONSTRAINT check_age CHECK (age >= 0)",
+            "CONSTRAINT check_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$')"
+        ]
+    };
+
+    // Первичный ключ
+    int64 id = 1 [(sql.sql_field) = {
+        constraints: {primary_key: true}
+        sql_type: {type: BIGINT}
+    }];
+
+    Ulid ulid = 999 [(sql.sql_field) = {
+        constraints: {primary_key: true}
+        sql_type: {type: TEXT, user_define_cast: true}
+    }];
+
+    // Уникальное поле email
+    string email = 2 [(sql.sql_field) = {
+        constraints: {unique: true}
+        sql_type: {type: TEXT}
+    }];
+
+    // Обычное текстовое поле с ограничением
+    string name = 3 [(sql.sql_field) = {
+        sql_type: {type: TEXT}
+        constraints: {constraint: "NOT NULL"}
+    }];
+
+    // Числовое поле с значением по умолчанию
+    int32 age = 4 [(sql.sql_field) = {
+        sql_type: {type: INTEGER}
+        constraints: {default_value: "0"}
+    }];
+
+    // Булево поле
+    bool is_active = 5 [(sql.sql_field) = {
+        sql_type: {type: BOOLEAN}
+        constraints: {default_value: "true"}
+    }];
+
+    // Поле с различными SQL типами
+    double balance = 6 [(sql.sql_field) = {
+        sql_type: {type: DOUBLE_PRECISION}
+        constraints: {default_value: "0.0"}
+    }];
+
+    // Массив строк
+    repeated string tags = 7 [(sql.sql_field) = {
+        sql_type: {type: TEXT}
+    }];
+
+    // Массив чисел с принудительным не-массивом (будет сериализован)
+    repeated int32 scores = 8 [(sql.sql_field) = {
+        sql_type: {type: TEXT, force_not_array: true}
+        serialized_message: true
+    }];
+
+//    // Встроенное сообщение
+//    Address address = 9 [(sql.sql_field) = {
+//        embedded_message: true
+//    }];
+//
+//    // Сериализованное сообщение
+//    UserPreferences preferences = 10 [(sql.sql_field) = {
+//        serialized_message: true
+//        sql_type: {type: JSONB}
+//    }];
+
+    // Поле для пропуска
+    string internal_field = 11 [(sql.sql_field) = {
+        skip: true
+    }];
+
+//    // Отношение один-ко-многим
+//    repeated Post posts = 12 [(sql.sql_relation) = {
+//        one_to_many: {
+//            ref_name: "user_id"
+//            constraint: "FOREIGN KEY (user_id) REFERENCES users(id)"
+//            on_delete_cascade: true
+//        }
+//    }];
+
+    // Отношение многие-ко-многим
+//    repeated Tag user_tags = 13 [(sql.sql_relation) = {
+//        many_to_many: {
+//            table: {
+//                generate: true
+//                table_name: "user_tags"
+//            }
+//            ref_on_delete_cascade: true
+//            ref_constraint: "FOREIGN KEY (user_id) REFERENCES users(id)"
+//            back_ref_on_delete_cascade: false
+//            back_ref_constraint: "FOREIGN KEY (tag_id) REFERENCES tags(id)"
+//        }
+//    }];
+}
+//
+//// Встроенное сообщение для адреса
+//message Address {
+//    string street = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string city = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string postal_code = 3 [(sql.sql_field) = {
+//        sql_type: {type: CHAR}
+//    }];
+//
+//    string country = 4 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'Unknown'"}
+//    }];
+//}
+//
+//// Сообщение для сериализации
+//message UserPreferences {
+//    string theme = 1;
+//    string language = 2;
+//    bool notifications_enabled = 3;
+//    repeated string favorite_categories = 4;
+//}
+//
+//// Таблица постов для отношения один-ко-многим
+//message Post {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "posts"
+//        virtual_fields: [
+//            {
+//                sql_name: "created_at"
+//                sql_type: {type: TIMESTAMPTZ}
+//                constraints: {default_value: "NOW()"}
+//                is_nullable: false
+//            }
+//        ]
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    string title = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string content = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    // Внешний ключ на пользователя (будет создан автоматически через отношение)
+//    int64 user_id = 4 [(sql.sql_field) = {
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    // Поле с HSTORE типом
+//    map<string, string> meta = 5 [(sql.sql_field) = {
+//        sql_type: {type: HSTORE}
+//    }];
+//}
+//
+//// Таблица тегов для отношения многие-ко-многим
+//message Tag {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "tags"
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    string name = 2 [(sql.sql_field) = {
+//        constraints: {unique: true}
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string description = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//}
+//
+//// Тест для различных SQL типов
+//message DataTypes {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "data_types_test"
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    // Тестирование всех SQL типов
+//    string text_field = 2 [(sql.sql_field) = {sql_type: {type: TEXT}}];
+//    int32 integer_field = 3 [(sql.sql_field) = {sql_type: {type: INTEGER}}];
+//    int64 bigint_field = 4 [(sql.sql_field) = {sql_type: {type: BIGINT}}];
+//    int32 smallint_field = 5 [(sql.sql_field) = {sql_type: {type: SMALLINT}}];
+//    double double_precision_field = 6 [(sql.sql_field) = {sql_type: {type: DOUBLE_PRECISION}}];
+//    float real_field = 7 [(sql.sql_field) = {sql_type: {type: REAL}}];
+//    bool boolean_field = 8 [(sql.sql_field) = {sql_type: {type: BOOLEAN}}];
+//    string timestamptz_field = 9 [(sql.sql_field) = {sql_type: {type: TIMESTAMPTZ}}];
+//    map<string, string> hstore_field = 10 [(sql.sql_field) = {sql_type: {type: HSTORE}}];
+//    string char_field = 11 [(sql.sql_field) = {sql_type: {type: CHAR}}];
+//    string jsonb_field = 12 [(sql.sql_field) = {sql_type: {type: JSONB}}];
+//}
+//
+//// Тест для сложных ограничений и виртуальных полей
+//message ComplexTable {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "complex_table"
+//        virtual_fields: [
+//            {
+//                sql_name: "full_name"
+//                sql_type: {type: TEXT}
+//                constraints: {constraint: "GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED"}
+//                is_nullable: false
+//            },
+//            {
+//                sql_name: "search_vector"
+//                sql_type: {type: TEXT}
+//                constraints: {constraint: "GENERATED ALWAYS AS (to_tsvector('english', coalesce(first_name, '') || ' ' || coalesce(last_name, '') || ' ' || coalesce(description, ''))) STORED"}
+//                is_nullable: true
+//            },
+//            {
+//                sql_name: "audit_log"
+//                sql_type: {type: JSONB}
+//                constraints: {default_value: "'[]'::jsonb"}
+//                is_nullable: false
+//                is_array: false
+//            }
+//        ]
+//        constraints: [
+//            "CONSTRAINT check_name_length CHECK (LENGTH(first_name) > 0 AND LENGTH(last_name) > 0)",
+//            "CONSTRAINT check_valid_status CHECK (status IN ('active', 'inactive', 'pending'))"
+//        ]
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    string first_name = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string last_name = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string status = 4 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'pending'"}
+//    }];
+//
+//    string description = 5 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//}
+//
+//// Тест для oneof полей - различные типы уведомлений
+//message Notification {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "notifications"
+//        virtual_fields: [
+//            {
+//                sql_name: "notification_type"
+//                sql_type: {type: TEXT}
+//                constraints: {constraint: "NOT NULL"}
+//                is_nullable: false
+//            }
+//        ]
+//        constraints: [
+//            "CONSTRAINT check_notification_type CHECK (notification_type IN ('email', 'sms', 'push', 'webhook'))"
+//        ]
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    string title = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string message = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    // oneof для различных типов доставки уведомлений
+//    oneof delivery_method {
+//        EmailDelivery email = 10 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//
+//        SmsDelivery sms = 11 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//
+//        PushDelivery push = 12 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//
+//        WebhookDelivery webhook = 13 [(sql.sql_field) = {
+//            serialized_message: true
+//            sql_type: {type: JSONB}
+//        }];
+//        string simple = 14 [(sql.sql_field) = {
+//        }];
+//    }
+//
+//    // Статус доставки
+//    string status = 20 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'pending'"}
+//    }];
+//}
+//
+//// Сообщения для различных типов доставки
+//message EmailDelivery {
+//    string recipient_email = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string sender_email = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string subject = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    bool is_html = 4 [(sql.sql_field) = {
+//        sql_type: {type: BOOLEAN}
+//        constraints: {default_value: "false"}
+//    }];
+//}
+//
+//message SmsDelivery {
+//    string phone_number = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string country_code = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'+1'"}
+//    }];
+//
+//    int32 max_length = 3 [(sql.sql_field) = {
+//        sql_type: {type: INTEGER}
+//        constraints: {default_value: "160"}
+//    }];
+//}
+//
+//message PushDelivery {
+//    string device_token = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string platform = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "CHECK (platform IN ('ios', 'android', 'web'))"}
+//    }];
+//
+//    string badge_count = 3 [(sql.sql_field) = {
+//        sql_type: {type: INTEGER}
+//        constraints: {default_value: "1"}
+//    }];
+//
+//    string sound = 4 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'default'"}
+//    }];
+//}
+//
+//message WebhookDelivery {
+//    string url = 1;
+//    string method = 2; // GET, POST, PUT, etc.
+//    map<string, string> headers = 3;
+//    string payload = 4;
+//    int32 timeout_seconds = 5;
+//    int32 retry_count = 6;
+//}
+//
+//// Ещё один пример oneof - платёжная информация
+//message Payment {
+//    option (sql.sql_table) = {
+//        generate: true
+//        table_name: "payments"
+//        virtual_fields: [
+//            {
+//                sql_name: "payment_method_type"
+//                sql_type: {type: TEXT}
+//                constraints: {constraint: "NOT NULL"}
+//                is_nullable: false
+//            },
+//            {
+//                sql_name: "created_at"
+//                sql_type: {type: TIMESTAMPTZ}
+//                constraints: {default_value: "NOW()"}
+//                is_nullable: false
+//            }
+//        ]
+//        constraints: [
+//            "CONSTRAINT check_payment_method CHECK (payment_method_type IN ('card', 'bank_transfer', 'crypto', 'cash'))",
+//            "CONSTRAINT check_positive_amount CHECK (amount > 0)"
+//        ]
+//    };
+//
+//    int64 id = 1 [(sql.sql_field) = {
+//        constraints: {primary_key: true}
+//        sql_type: {type: BIGINT}
+//    }];
+//
+//    double amount = 2 [(sql.sql_field) = {
+//        sql_type: {type: DOUBLE_PRECISION}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string currency = 3 [(sql.sql_field) = {
+//        sql_type: {type: CHAR}
+//        constraints: {default_value: "'USD'"}
+//    }];
+//
+//    // oneof для различных методов оплаты
+//    oneof payment_method {
+//        CreditCardPayment card = 10 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//
+//        BankTransferPayment bank_transfer = 11 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//
+//        CryptoPayment crypto = 12 [(sql.sql_field) = {
+//            serialized_message: true
+//            sql_type: {type: JSONB}
+//        }];
+//
+//        CashPayment cash = 13 [(sql.sql_field) = {
+//            serialized_message: true
+//        }];
+//    }
+//
+//    string transaction_id = 20 [(sql.sql_field) = {
+//        constraints: {unique: true}
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string status = 21 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {default_value: "'pending'"}
+//    }];
+//}
+//
+//message CreditCardPayment {
+//    string card_number_hash = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string card_holder_name = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string expiry_month = 3 [(sql.sql_field) = {
+//        sql_type: {type: CHAR}
+//    }];
+//
+//    string expiry_year = 4 [(sql.sql_field) = {
+//        sql_type: {type: CHAR}
+//    }];
+//
+//    string card_type = 5 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "CHECK (card_type IN ('visa', 'mastercard', 'amex', 'discover'))"}
+//    }];
+//}
+//
+//message BankTransferPayment {
+//    string bank_name = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string account_number_hash = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {constraint: "NOT NULL"}
+//    }];
+//
+//    string routing_number = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string account_holder_name = 4 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//}
+//
+//message CryptoPayment {
+//    string cryptocurrency = 1; // BTC, ETH, etc.
+//    string wallet_address = 2;
+//    string transaction_hash = 3;
+//    int32 confirmations_required = 4;
+//    int32 current_confirmations = 5;
+//    string network = 6; // mainnet, testnet, etc.
+//}
+//
+//message CashPayment {
+//    string location = 1 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string cashier_id = 2 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//    }];
+//
+//    string receipt_number = 3 [(sql.sql_field) = {
+//        sql_type: {type: TEXT}
+//        constraints: {unique: true}
+//    }];
+//}

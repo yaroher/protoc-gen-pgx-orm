@@ -34,7 +34,10 @@ func NewFromProtoField(field *protogen.Field) *Field {
 	if sqlField.GetSkip() {
 		return nil
 	}
-	if field.Desc.Kind() == protoreflect.MessageKind && !isKnownType(field) && !isSerializedMessage(field) {
+	if field.Desc.Kind() == protoreflect.MessageKind &&
+		!isKnownType(field) &&
+		!isSerializedMessage(field) &&
+		!isUserDefineCast(field) {
 		help.Logger.Warn(
 			"skip message field cause not serialized mark",
 			zap.String("name", string(field.Desc.FullName())),

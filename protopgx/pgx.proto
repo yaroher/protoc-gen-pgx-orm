@@ -40,6 +40,7 @@ message SqlType {
     SqlFiledType type = 1;
     //    string add = 2;
     bool force_not_array = 3;
+    bool user_cast = 4;
 }
 
 message SqlConstraint {
@@ -129,6 +130,7 @@ message ParsedField {
         bool nullable = 7; // from proto
         bool is_array = 8; // from proto
         ProtoKind proto_kind = 9;
+        bool force_user_define_caster = 10;
     }
     TypeInfo type_info = 4;
     SqlConstraint constraint = 5;

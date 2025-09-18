@@ -18,19 +18,21 @@ func NewTypeInfo(
 	pgxType := getPgxTypeInfo(opts.GetType(), nullable, array)
 	if field == nil {
 		return &protopgx.ParsedField_TypeInfo{
-			SqlType:   opts,
-			PgxType:   pgxType,
-			Nullable:  nullable,
-			IsArray:   array,
-			ProtoKind: protopgx.ParsedField_KIND_UNSPECIFIED,
+			SqlType:               opts,
+			PgxType:               pgxType,
+			Nullable:              nullable,
+			IsArray:               array,
+			ProtoKind:             protopgx.ParsedField_KIND_UNSPECIFIED,
+			ForceUserDefineCaster: opts.UserCast,
 		}
 	}
 	parsed := &protopgx.ParsedField_TypeInfo{
-		SqlType:   opts,
-		PgxType:   pgxType,
-		Nullable:  nullable,
-		IsArray:   array,
-		ProtoKind: protopgx.ParsedField_ProtoKind(field.Desc.Kind()),
+		SqlType:               opts,
+		PgxType:               pgxType,
+		Nullable:              nullable,
+		IsArray:               array,
+		ProtoKind:             protopgx.ParsedField_ProtoKind(field.Desc.Kind()),
+		ForceUserDefineCaster: opts.UserCast,
 	}
 	parsed.DownCasterFn = getDowncast(field, parsed)
 	parsed.UpCasterFn = getUpcast(field, parsed)
@@ -44,7 +46,7 @@ func getDowncast(field *protogen.Field, info *protopgx.ParsedField_TypeInfo) *pr
 			CallSignature: fmt.Sprintf("%s($var)", info.PgxType),
 		}
 	}
-	if info.PgxType == "pgtype.Hstore" {
+	if info.ForceUserDefineCaster {
 		return &protopgx.CasterFn{
 			Type:          userDefinedCastType(fieldGoType(field), info.PgxType),
 			Name:          userDefinedCastName(downcastPrefix, field.GoName),
@@ -73,7 +75,7 @@ func getUpcast(field *protogen.Field, info *protopgx.ParsedField_TypeInfo) *prot
 			CallSignature: fmt.Sprintf("u%s($var)", info.PgxType),
 		}
 	}
-	if info.PgxType == "pgtype.Hstore" {
+	if info.ForceUserDefineCaster {
 		return &protopgx.CasterFn{
 			Type:          userDefinedCastType(info.PgxType, fieldGoType(field)),
 			Name:          userDefinedCastName(upcastPrefix, field.GoName),

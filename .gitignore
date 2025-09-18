@@ -15,7 +15,8 @@ migrations
 .idea
 # Generated files
 .idea/**/contentModel.xml
-
+test/orm
+test/models.sql
 # Sensitive or high-churn files
 .idea/**/dataSources/
 .idea/**/dataSources.ids
