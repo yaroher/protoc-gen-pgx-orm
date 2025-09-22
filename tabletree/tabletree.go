@@ -57,9 +57,12 @@ func (t *TableNode) ToSql() string {
 	for _, field := range t.Fields {
 		fields = append(fields, field.ToSql())
 	}
+	for _, constraint := range t.Constraints {
+		fields = append(fields, fmt.Sprintf("\t%s", constraint))
+	}
 
 	sql := fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (\n%s\n);\n",
+		"CREATE TABLE IF NOT EXISTS \"%s\" (\n%s\n);\n",
 		t.SqlTableName(),
 		strings.Join(fields, ",\n"),
 	)
