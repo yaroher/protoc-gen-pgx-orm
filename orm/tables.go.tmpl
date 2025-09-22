@@ -271,13 +271,13 @@ defaultOpts ...{{$table.GoName}}RepositoryOption,
         {{$table.ProtoName}}ToScanner(
         {{- range $index,$field:= .Fields }}
             {{- if $field.IsUserDownCasterNeeded}}
-                {{$field.TypeInfo.DownCasterFn.Name}}{{- if $index}},{{- end}}
+                {{- $field.TypeInfo.DownCasterFn.Name}},
             {{- end }}
         {{- end }}),
         ScannerTo{{$table.ProtoName}}(
         {{- range $index,$field:= .Fields }}
             {{- if $field.IsUserUpCasterNeeded}}
-                {{$field.TypeInfo.UpCasterFn.Name}}{{- if $index}},{{- end}}
+                {{- $field.TypeInfo.UpCasterFn.Name}},
             {{- end }}
         {{- end }}),
         defaultOpts...
