@@ -55,6 +55,11 @@ message User {
         sql_type: {type: TEXT,user_cast: true}
     }];
 
+    Ulid ulid2 = 998 [(sql.sql_field) = {
+        constraints: {primary_key: true}
+        sql_type: {type: TEXT,user_cast: true}
+    }];
+
     // Уникальное поле email
     string email = 2 [(sql.sql_field) = {
         constraints: {unique: true}
