@@ -43,6 +43,7 @@ type ScalarOperator[V any, F fieldAlias] interface {
 type setterOperator[V any, F fieldAlias] interface {
 	SetExpr(string) *valueSetterImpl[F]
 	Set(V) *valueSetterImpl[F]
+	SetRaw(sql string, value V) *valueSetterImpl[F]
 }
 type eqOperator[V any, F fieldAlias] interface {
 	Eq(V) Clause[F]
