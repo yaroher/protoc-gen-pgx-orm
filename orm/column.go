@@ -110,6 +110,12 @@ func (f *column[V, F]) SetExpr(expr string) *valueSetterImpl[F] {
 		expr:  expr,
 	}
 }
+func (f *column[V, F]) SetRaw(sql string, value V) *valueSetterImpl[F] {
+	return &valueSetterImpl[F]{
+		field: f.fieldAlias,
+		raw:   &RawExprClause[F]{sql, []any{value}},
+	}
+}
 func (f *column[V, F]) String() string {
 	return f.fieldAlias.String()
 }

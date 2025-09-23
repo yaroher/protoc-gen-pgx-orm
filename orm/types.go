@@ -106,8 +106,9 @@ type ValueSetter[F fieldAlias] interface {
 }
 type valueSetterImpl[F fieldAlias] struct {
 	field F
-	expr  string
 	value any
+	expr  string
+	raw   *RawExprClause[F]
 }
 
 func NewValueSetter[F fieldAlias](field F, value any) ValueSetter[F] {
@@ -132,10 +133,14 @@ func (s valueSetterImpl[F]) build(buf *strings.Builder, ta string, paramIndex *i
 		buf.WriteString(s.expr)
 		return
 	}
-	buf.WriteByte('$')
-	buf.WriteString(strconv.Itoa(*paramIndex))
-	*paramIndex++
-	*args = append(*args, s.value)
+	if s.raw != nil {
+		s.raw.build(buf, ta, paramIndex, args)
+	} else {
+		buf.WriteByte('$')
+		buf.WriteString(strconv.Itoa(*paramIndex))
+		*paramIndex++
+		*args = append(*args, s.value)
+	}
 }
 
 var (
