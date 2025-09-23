@@ -127,15 +127,15 @@ func (s valueSetterImpl[F]) Value() any {
 }
 
 func (s valueSetterImpl[F]) build(buf *strings.Builder, ta string, paramIndex *int, args *[]any) {
-	buf.WriteString(s.field.String())
-	buf.WriteString(" = ")
-	if s.expr != "" {
-		buf.WriteString(s.expr)
-		return
-	}
 	if s.raw != nil {
 		s.raw.build(buf, ta, paramIndex, args)
 	} else {
+		buf.WriteString(s.field.String())
+		buf.WriteString(" = ")
+		if s.expr != "" {
+			buf.WriteString(s.expr)
+			return
+		}
 		buf.WriteByte('$')
 		buf.WriteString(strconv.Itoa(*paramIndex))
 		*paramIndex++
