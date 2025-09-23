@@ -43,7 +43,7 @@ type ScalarOperator[V any, F fieldAlias] interface {
 type setterOperator[V any, F fieldAlias] interface {
 	SetExpr(string) *valueSetterImpl[F]
 	Set(V) *valueSetterImpl[F]
-	SetRaw(sql string, value V) *valueSetterImpl[F]
+	SetRaw(sql string, value ...any) *valueSetterImpl[F]
 }
 type eqOperator[V any, F fieldAlias] interface {
 	Eq(V) Clause[F]
@@ -111,10 +111,10 @@ func (f *column[V, F]) SetExpr(expr string) *valueSetterImpl[F] {
 		expr:  expr,
 	}
 }
-func (f *column[V, F]) SetRaw(sql string, value V) *valueSetterImpl[F] {
+func (f *column[V, F]) SetRaw(sql string, value ...any) *valueSetterImpl[F] {
 	return &valueSetterImpl[F]{
 		field: f.fieldAlias,
-		raw:   &RawExprClause[F]{sql, []any{value}},
+		raw:   &RawExprClause[F]{sql, value},
 	}
 }
 func (f *column[V, F]) String() string {
