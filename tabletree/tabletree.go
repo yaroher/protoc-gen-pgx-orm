@@ -36,11 +36,12 @@ type Encapsulation struct {
 
 type TableNode struct {
 	// Basic table information
-	GoIdent     protogen.GoIdent
-	Name        protoreflect.FullName
-	Fields      []*Field
-	Constraints []string
-	Virtual     bool
+	GoIdent         protogen.GoIdent
+	Name            protoreflect.FullName
+	OverrideSqlName *string
+	Fields          []*Field
+	Constraints     []string
+	Virtual         bool
 
 	OneOfs    map[protoreflect.FullName]*Encapsulation
 	Embeds    map[protoreflect.FullName]*Encapsulation
@@ -161,6 +162,9 @@ func (t *TableNode) FindField(name string) (*Field, bool) {
 }
 
 func (t *TableNode) SqlTableName() string {
+	if t.OverrideSqlName != nil {
+		return *t.OverrideSqlName
+	}
 	return strcase.ToSnake(string(t.Name.Name()))
 }
 
@@ -181,12 +185,13 @@ func CollectTablesFromProto(files []*protogen.File) []*TableNode {
 				continue
 			}
 			t := &TableNode{
-				GoIdent:     message.GoIdent,
-				Name:        message.Desc.FullName(),
-				Fields:      CollectFieldsFromMessage(message),
-				Constraints: sqlTable.GetConstraints(),
-				OneOfs:      make(map[protoreflect.FullName]*Encapsulation),
-				Embeds:      make(map[protoreflect.FullName]*Encapsulation),
+				GoIdent:         message.GoIdent,
+				Name:            message.Desc.FullName(),
+				OverrideSqlName: sqlTable.TableName,
+				Fields:          CollectFieldsFromMessage(message),
+				Constraints:     sqlTable.GetConstraints(),
+				OneOfs:          make(map[protoreflect.FullName]*Encapsulation),
+				Embeds:          make(map[protoreflect.FullName]*Encapsulation),
 			}
 			for _, field := range t.Fields {
 				if field.GetFromOneOfField() != "" {
@@ -219,7 +224,7 @@ func CollectTablesFromProto(files []*protogen.File) []*TableNode {
 }
 func findTable(tables []*TableNode, name protoreflect.FullName) (*TableNode, bool) {
 	for _, t := range tables {
-		if t.Name == name {
+		if t.Name == name || t.GoIdent.GoName == string(name) {
 			return t, true
 		}
 	}
