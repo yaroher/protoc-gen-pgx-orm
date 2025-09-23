@@ -44,8 +44,8 @@ type ScannerRepository[F fieldAlias, S targeter[F]] interface {
 	Insert(ctx context.Context, entity S, opts ...ScannerCallOptions[F, S]) error
 	InsertRet(ctx context.Context, entity S, opts ...ScannerCallOptions[F, S]) (S, error)
 	InsertMany(ctx context.Context, entities []S, opts ...ScannerCallOptions[F, S]) error
-	//Update(ctx context.Context, entity S, opts ...ScannerCallOptions[F, S]) error
-	//UpdateRet(ctx context.Context, entity S, opts ...ScannerCallOptions[F, S]) (S, error)
+	Update(ctx context.Context, entity S, clause Clause[F], opts ...ScannerCallOptions[F, S]) error
+	UpdateRet(ctx context.Context, entity S, clause Clause[F], opts ...ScannerCallOptions[F, S]) (S, error)
 	//Upsert(ctx context.Context, entity S, conflictFields []F, opts ...ScannerCallOptions[F, S]) error
 	//UpsertRet(ctx context.Context, entity S, conflictFields []F, opts ...ScannerCallOptions[F, S]) (S, error)
 	//UpsertIgnore(ctx context.Context, entity S, opts ...ScannerCallOptions[F, S]) error
@@ -142,30 +142,33 @@ func (g *genericScannerRepository[F, S]) InsertMany(
 	return err
 }
 
-//func (g *genericScannerRepository[F, S]) Update(
-//	ctx context.Context,
-//	entity S,
-//	_ ...ScannerCallOptions[F, S],
-//) error {
-//	_, err := g.table.Execute(
-//		ctx,
-//		g.dbGetter(ctx, SqlMutation),
-//		g.table.Update().Set(getFieldsSetters(entity, g.table.allFields...)...),
-//	)
-//	return err
-//}
-//
-//func (g *genericScannerRepository[F, S]) UpdateRet(
-//	ctx context.Context,
-//	entity S,
-//	_ ...ScannerCallOptions[F, S],
-//) (S, error) {
-//	return g.table.QueryRow(
-//		ctx,
-//		g.dbGetter(ctx, SqlMutation),
-//		g.table.Update().Set(getFieldsSetters(entity, g.table.allFields...)...).ReturningAll(),
-//	)
-//}
+func (g *genericScannerRepository[F, S]) Update(
+	ctx context.Context,
+	entity S,
+	clause Clause[F],
+	_ ...ScannerCallOptions[F, S],
+) error {
+	_, err := g.table.Execute(
+		ctx,
+		g.dbGetter(ctx, SqlMutation),
+		g.table.Update().Set(GetFieldsSetters(entity, g.table.allFields...)...).Where(clause),
+	)
+	return err
+}
+
+func (g *genericScannerRepository[F, S]) UpdateRet(
+	ctx context.Context,
+	entity S,
+	clause Clause[F],
+	_ ...ScannerCallOptions[F, S],
+) (S, error) {
+	return g.table.QueryRow(
+		ctx,
+		g.dbGetter(ctx, SqlMutation),
+		g.table.Update().Set(GetFieldsSetters(entity, g.table.allFields...)...).Where(clause).ReturningAll(),
+	)
+}
+
 //
 //func (g *genericScannerRepository[F, S]) Upsert(
 //	ctx context.Context,

@@ -59,8 +59,8 @@ type ProtoRepository[F fieldAlias, S targeter[F], T proto.Message] interface {
 	Insert(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
 	InsertRet(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) (T, error)
 	InsertMany(ctx context.Context, entities []T, opts ...ProtoCallOption[F, S, T]) error
-	//Update(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
-	//UpdateRet(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) (T, error)
+	Update(ctx context.Context, entity T, clause Clause[F], opts ...ProtoCallOption[F, S, T]) error
+	UpdateRet(ctx context.Context, entity T, clause Clause[F], opts ...ProtoCallOption[F, S, T]) (T, error)
 	//Upsert(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) error
 	//UpsertRet(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) (T, error)
 	//UpsertIgnore(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
@@ -139,27 +139,25 @@ func (g *genericRepository[F, S, T]) InsertMany(
 	return g.scannerRepo.InsertMany(ctx, models, g.opts(opts).toScannerCallOptions()...)
 }
 
-// func (g *genericRepository[F, S, T]) Update(
-//
-//	ctx context.Context,
-//	entity T,
-//	opts ...ProtoCallOption[F, S, T],
-//
-//	) error {
-//		return g.scannerRepo.Update(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
-//	}
-//
-// func (g *genericRepository[F, S, T]) UpdateRet(
-//
-//	ctx context.Context,
-//	entity T,
-//	opts ...ProtoCallOption[F, S, T],
-//
-//	) (T, error) {
-//		model, err := g.scannerRepo.UpdateRet(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
-//		return g.upcast(model), err
-//	}
-//
+func (g *genericRepository[F, S, T]) Update(
+	ctx context.Context,
+	entity T,
+	clause Clause[F],
+	opts ...ProtoCallOption[F, S, T],
+) error {
+	return g.scannerRepo.Update(ctx, g.downcast(entity), clause, g.opts(opts).toScannerCallOptions()...)
+}
+
+func (g *genericRepository[F, S, T]) UpdateRet(
+	ctx context.Context,
+	entity T,
+	clause Clause[F],
+	opts ...ProtoCallOption[F, S, T],
+) (T, error) {
+	model, err := g.scannerRepo.UpdateRet(ctx, g.downcast(entity), clause, g.opts(opts).toScannerCallOptions()...)
+	return g.upcast(model), err
+}
+
 // func (g *genericRepository[F, S, T]) Upsert(
 //
 //	ctx context.Context,
