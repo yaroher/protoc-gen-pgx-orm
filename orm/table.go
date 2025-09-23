@@ -8,6 +8,7 @@ import (
 
 type TableI[F fieldAlias, T targeter[F]] interface {
 	AllFields() []F
+	AllFieldsExcept(field ...F) []F
 	Name() string
 	NewScanner() T
 	Select(field ...F) *SelectQuery[F]
@@ -50,6 +51,22 @@ func (t *table[F, T]) Name() string {
 }
 func (t *table[F, T]) AllFields() []F {
 	return t.allFields
+}
+func (t *table[F, T]) AllFieldsExcept(field ...F) []F {
+	ret := make([]F, 0)
+	for _, f := range t.allFields {
+		needed := true
+		for _, skip := range field {
+			if skip.String() == f.String() {
+				needed = false
+			}
+		}
+		if needed {
+			continue
+		}
+		ret = append(ret, f)
+	}
+	return ret
 }
 func (t *table[F, T]) NewScanner() T {
 	return t.scanFactory()

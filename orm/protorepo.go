@@ -6,18 +6,6 @@ import (
 )
 
 type protoCallOptions[F fieldAlias, S targeter[F], T proto.Message] struct {
-	afterGetByHooks []func(
-		ctx context.Context,
-		query ormQuery,
-		entities T,
-		opts ...ProtoCallOption[F, S, T],
-	) error
-	afterListByHooks []func(
-		ctx context.Context,
-		query ormQuery,
-		entities []T,
-		opts ...ProtoCallOption[F, S, T],
-	) error
 	excludeFields  []F
 	conflictFields []F
 	copyFields     []F
@@ -46,31 +34,6 @@ type callOptionsFn[F fieldAlias, S targeter[F], T proto.Message] func(*protoCall
 func (f callOptionsFn[F, S, T]) apply(opts *protoCallOptions[F, S, T]) {
 	f(opts)
 }
-func WithAfterGetByHooks[F fieldAlias, S targeter[F], T proto.Message](
-	hooks ...func(
-		ctx context.Context,
-		query ormQuery,
-		entities T,
-		opts ...ProtoCallOption[F, S, T],
-	) error,
-) ProtoCallOption[F, S, T] {
-	return callOptionsFn[F, S, T](func(opts *protoCallOptions[F, S, T]) {
-		opts.afterGetByHooks = hooks
-	})
-}
-
-func WithAfterListByHooks[F fieldAlias, S targeter[F], T proto.Message](
-	hooks ...func(
-		ctx context.Context,
-		query ormQuery,
-		entities []T,
-		opts ...ProtoCallOption[F, S, T],
-	) error,
-) ProtoCallOption[F, S, T] {
-	return callOptionsFn[F, S, T](func(opts *protoCallOptions[F, S, T]) {
-		opts.afterListByHooks = hooks
-	})
-}
 
 func WithExcludeFields[F fieldAlias, S targeter[F], T proto.Message](fields ...F) ProtoCallOption[F, S, T] {
 	return callOptionsFn[F, S, T](func(opts *protoCallOptions[F, S, T]) {
@@ -96,11 +59,11 @@ type ProtoRepository[F fieldAlias, S targeter[F], T proto.Message] interface {
 	Insert(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
 	InsertRet(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) (T, error)
 	InsertMany(ctx context.Context, entities []T, opts ...ProtoCallOption[F, S, T]) error
-	Update(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
-	UpdateRet(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) (T, error)
-	Upsert(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) error
-	UpsertRet(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) (T, error)
-	UpsertIgnore(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
+	//Update(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
+	//UpdateRet(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) (T, error)
+	//Upsert(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) error
+	//UpsertRet(ctx context.Context, entity T, conflictFields []F, opts ...ProtoCallOption[F, S, T]) (T, error)
+	//UpsertIgnore(ctx context.Context, entity T, opts ...ProtoCallOption[F, S, T]) error
 
 	GetBy(ctx context.Context, query ormQuery, opts ...ProtoCallOption[F, S, T]) (T, error)
 	ListBy(ctx context.Context, query ormQuery, opts ...ProtoCallOption[F, S, T]) ([]T, error)
@@ -191,45 +154,60 @@ func (g *genericRepository[F, S, T]) InsertMany(
 	}
 	return g.scannerRepo.InsertMany(ctx, models, g.opts(opts).toScannerCallOptions()...)
 }
-func (g *genericRepository[F, S, T]) Update(
-	ctx context.Context,
-	entity T,
-	opts ...ProtoCallOption[F, S, T],
-) error {
-	return g.scannerRepo.Update(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
-}
-func (g *genericRepository[F, S, T]) UpdateRet(
-	ctx context.Context,
-	entity T,
-	opts ...ProtoCallOption[F, S, T],
-) (T, error) {
-	model, err := g.scannerRepo.UpdateRet(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
-	return g.upcast(model), err
-}
-func (g *genericRepository[F, S, T]) Upsert(
-	ctx context.Context,
-	entity T,
-	conflictFields []F,
-	opts ...ProtoCallOption[F, S, T],
-) error {
-	return g.scannerRepo.Upsert(ctx, g.downcast(entity), conflictFields, g.opts(opts).toScannerCallOptions()...)
-}
-func (g *genericRepository[F, S, T]) UpsertRet(
-	ctx context.Context,
-	entity T,
-	conflictFields []F,
-	opts ...ProtoCallOption[F, S, T],
-) (T, error) {
-	model, err := g.scannerRepo.UpsertRet(ctx, g.downcast(entity), conflictFields, g.opts(opts).toScannerCallOptions()...)
-	return g.upcast(model), err
-}
-func (g *genericRepository[F, S, T]) UpsertIgnore(
-	ctx context.Context,
-	entity T,
-	opts ...ProtoCallOption[F, S, T],
-) error {
-	return g.scannerRepo.UpsertIgnore(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
-}
+
+// func (g *genericRepository[F, S, T]) Update(
+//
+//	ctx context.Context,
+//	entity T,
+//	opts ...ProtoCallOption[F, S, T],
+//
+//	) error {
+//		return g.scannerRepo.Update(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
+//	}
+//
+// func (g *genericRepository[F, S, T]) UpdateRet(
+//
+//	ctx context.Context,
+//	entity T,
+//	opts ...ProtoCallOption[F, S, T],
+//
+//	) (T, error) {
+//		model, err := g.scannerRepo.UpdateRet(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
+//		return g.upcast(model), err
+//	}
+//
+// func (g *genericRepository[F, S, T]) Upsert(
+//
+//	ctx context.Context,
+//	entity T,
+//	conflictFields []F,
+//	opts ...ProtoCallOption[F, S, T],
+//
+//	) error {
+//		return g.scannerRepo.Upsert(ctx, g.downcast(entity), conflictFields, g.opts(opts).toScannerCallOptions()...)
+//	}
+//
+// func (g *genericRepository[F, S, T]) UpsertRet(
+//
+//	ctx context.Context,
+//	entity T,
+//	conflictFields []F,
+//	opts ...ProtoCallOption[F, S, T],
+//
+//	) (T, error) {
+//		model, err := g.scannerRepo.UpsertRet(ctx, g.downcast(entity), conflictFields, g.opts(opts).toScannerCallOptions()...)
+//		return g.upcast(model), err
+//	}
+//
+// func (g *genericRepository[F, S, T]) UpsertIgnore(
+//
+//	ctx context.Context,
+//	entity T,
+//	opts ...ProtoCallOption[F, S, T],
+//
+//	) error {
+//		return g.scannerRepo.UpsertIgnore(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
+//	}
 func (g *genericRepository[F, S, T]) GetBy(
 	ctx context.Context,
 	query ormQuery,
@@ -240,12 +218,6 @@ func (g *genericRepository[F, S, T]) GetBy(
 	entity := g.upcast(model)
 	if err != nil {
 		return entity, err
-	}
-	for _, h := range opt.afterGetByHooks {
-		err := h(ctx, query, entity, opts...)
-		if err != nil {
-			return entity, err
-		}
 	}
 	return entity, nil
 }
@@ -263,12 +235,6 @@ func (g *genericRepository[F, S, T]) ListBy(
 	for _, model := range models {
 		entity := g.upcast(model)
 		rets = append(rets, entity)
-	}
-	for _, h := range opt.afterListByHooks {
-		err := h(ctx, query, rets, opts...)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return rets, nil
 }
