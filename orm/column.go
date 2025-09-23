@@ -58,8 +58,8 @@ type logicalOperator[V any, F fieldAlias] interface {
 type anyQOperator[V any, F fieldAlias] interface {
 	Of(query ormQuery) Clause[F]
 	NotOf(query ormQuery) Clause[F]
-	Raw(string, ...any) Clause[F]
-	NotRaw(string, ...any) Clause[F]
+	Raw(string, string, ...any) Clause[F]
+	NotRaw(string, string, ...any) Clause[F]
 	ExistsOf(query ormQuery) Clause[F]
 	ExistsRaw(string, ...any) Clause[F]
 }
@@ -212,11 +212,11 @@ func (f *column[V, F]) Of(query ormQuery) Clause[F] {
 func (f *column[V, F]) NotOf(query ormQuery) Clause[F] {
 	return &FieldClause[F]{Field: f.fieldAlias, Operator: "!=", Right: &SubQueryExprClause[F]{query}}
 }
-func (f *column[V, F]) Raw(sql string, args ...any) Clause[F] {
-	return &FieldClause[F]{Field: f.fieldAlias, Operator: sql, Right: &RawExprClause[F]{sql, args}}
+func (f *column[V, F]) Raw(operator string, sql string, args ...any) Clause[F] {
+	return &FieldClause[F]{Field: f.fieldAlias, Operator: operator, Right: &RawExprClause[F]{sql, args}}
 }
-func (f *column[V, F]) NotRaw(sql string, args ...any) Clause[F] {
-	return &NotClause[F]{Inner: f.Raw(sql, args...)}
+func (f *column[V, F]) NotRaw(operator string, sql string, args ...any) Clause[F] {
+	return &NotClause[F]{Inner: f.Raw(operator, sql, args...)}
 }
 func (f *column[V, F]) ExistsOf(query ormQuery) Clause[F] {
 	return &ExistsClause[F]{SubQuery: &SubQueryExprClause[F]{query}, Negate: false}
