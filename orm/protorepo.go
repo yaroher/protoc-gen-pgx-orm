@@ -71,22 +71,6 @@ type ProtoRepository[F fieldAlias, S targeter[F], T proto.Message] interface {
 	ExecAffected(ctx context.Context, query ormQuery, opts ...ProtoCallOption[F, S, T]) (int64, error)
 }
 
-func getFieldsSetters[F fieldAlias, S targeter[F]](model S, fields ...F) []ValueSetter[F] {
-	setters := make([]ValueSetter[F], 0)
-	for _, f := range fields {
-		setters = append(setters, model.getSetter(f)())
-	}
-	return setters
-}
-
-func getFieldsValues[F fieldAlias, S targeter[F]](model S, fields ...F) []any {
-	values := make([]any, 0)
-	for _, f := range fields {
-		values = append(values, model.getValue(f)())
-	}
-	return values
-}
-
 type genericRepository[F fieldAlias, S targeter[F], T proto.Message] struct {
 	scannerRepo *genericScannerRepository[F, S]
 	downcast    func(T) S

@@ -56,6 +56,22 @@ type ScannerRepository[F fieldAlias, S targeter[F]] interface {
 	ExecAffected(ctx context.Context, query ormQuery, opts ...ScannerCallOptions[F, S]) (int64, error)
 }
 
+func GetFieldsSetters[F fieldAlias, S targeter[F]](model S, fields ...F) []ValueSetter[F] {
+	setters := make([]ValueSetter[F], 0)
+	for _, f := range fields {
+		setters = append(setters, model.getSetter(f)())
+	}
+	return setters
+}
+
+func GetFieldsValues[F fieldAlias, S targeter[F]](model S, fields ...F) []any {
+	values := make([]any, 0)
+	for _, f := range fields {
+		values = append(values, model.getValue(f)())
+	}
+	return values
+}
+
 type genericScannerRepository[F fieldAlias, S targeter[F]] struct {
 	table    *table[F, S]
 	dbGetter DbGetter
@@ -94,7 +110,7 @@ func (g *genericScannerRepository[F, S]) Insert(
 	_, err := g.table.Execute(
 		ctx,
 		g.dbGetter(ctx, SqlMutation),
-		g.table.Insert().From(getFieldsSetters(entity, g.table.allFields...)...),
+		g.table.Insert().From(GetFieldsSetters(entity, g.table.allFields...)...),
 	)
 	return err
 }
@@ -107,7 +123,7 @@ func (g *genericScannerRepository[F, S]) InsertRet(
 	return g.table.QueryRow(
 		ctx,
 		g.dbGetter(ctx, SqlMutation),
-		g.table.Insert().From(getFieldsSetters(entity, g.table.allFields...)...).ReturningAll(),
+		g.table.Insert().From(GetFieldsSetters(entity, g.table.allFields...)...).ReturningAll(),
 	)
 }
 
