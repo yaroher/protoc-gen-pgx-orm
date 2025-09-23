@@ -123,8 +123,11 @@ func (g *genericRepository[F, S, T]) InsertRet(
 	ctx context.Context,
 	entity T,
 	opts ...ProtoCallOption[F, S, T],
-) (T, error) {
+) (ret T, err error) {
 	model, err := g.scannerRepo.InsertRet(ctx, g.downcast(entity), g.opts(opts).toScannerCallOptions()...)
+	if err != nil {
+		return ret, err
+	}
 	return g.upcast(model), err
 }
 func (g *genericRepository[F, S, T]) InsertMany(
@@ -153,8 +156,11 @@ func (g *genericRepository[F, S, T]) UpdateRet(
 	entity T,
 	clause Clause[F],
 	opts ...ProtoCallOption[F, S, T],
-) (T, error) {
+) (ret T, err error) {
 	model, err := g.scannerRepo.UpdateRet(ctx, g.downcast(entity), clause, g.opts(opts).toScannerCallOptions()...)
+	if err != nil {
+		return ret, err
+	}
 	return g.upcast(model), err
 }
 
@@ -194,14 +200,13 @@ func (g *genericRepository[F, S, T]) GetBy(
 	ctx context.Context,
 	query ormQuery,
 	opts ...ProtoCallOption[F, S, T],
-) (T, error) {
+) (ret T, err error) {
 	opt := g.opts(opts)
 	model, err := g.scannerRepo.GetBy(ctx, query, opt.toScannerCallOptions()...)
-	entity := g.upcast(model)
 	if err != nil {
-		return entity, err
+		return ret, err
 	}
-	return entity, nil
+	return g.upcast(model), nil
 }
 func (g *genericRepository[F, S, T]) ListBy(
 	ctx context.Context,
